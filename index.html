@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DataLens - Lightweight data structure visualization and intelligent analysis engine">
+  <title>DataLens - Data Structure Visualizer</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Inline critical styles for instant load */
+    body { margin: 0; }
+    .app-container { opacity: 0; transition: opacity 0.3s ease; }
+    .app-container.loaded { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="app-container" id="app">
+
+    <!-- ========== Header ========== -->
+    <header class="app-header">
+      <div class="app-logo">
+        <div class="app-logo-icon">DL</div>
+        <span class="app-logo-text">DataLens</span>
+        <span class="app-logo-subtitle" data-i18n="app.subtitle">Data Structure Visualizer</span>
+      </div>
+      <div class="header-actions">
+        <div class="lang-switcher">
+          <button class="lang-btn active" data-lang="en" data-i18n="lang.en">EN</button>
+          <button class="lang-btn" data-lang="zh-CN" data-i18n="lang.zh">中文</button>
+          <button class="lang-btn" data-lang="zh-TW" data-i18n="lang.tw">繁體</button>
+        </div>
+        <button class="header-btn" id="theme-btn" data-i18n="theme.light">Light</button>
+      </div>
+    </header>
+
+    <!-- ========== Main Content ========== -->
+    <div class="app-main">
+
+      <!-- ===== Sidebar (Input Panel) ===== -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-title" data-i18n="input.title">Input Data</span>
+          <div class="sidebar-actions">
+            <button class="sidebar-btn" id="sample-btn" data-i18n="input.sample">Load Sample</button>
+            <button class="sidebar-btn" id="clear-btn" data-i18n="input.clear">Clear</button>
+          </div>
+        </div>
+
+        <!-- Upload Area -->
+        <div class="upload-area" id="upload-area">
+          <div class="upload-icon">&#128196;</div>
+          <div class="upload-text" data-i18n="input.upload">Drop file here or click to upload</div>
+          <div class="upload-hint" data-i18n="input.upload.hint">Supports .json, .yaml, .yml, .xml, .csv, .toml</div>
+          <input type="file" id="file-input" accept=".json,.yaml,.yml,.xml,.csv,.toml,.txt">
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+          <div class="input-wrapper">
+            <textarea
+              class="input-textarea"
+              id="input-textarea"
+              data-i18n-placeholder="input.placeholder"
+              placeholder="Paste your data here (JSON, YAML, XML, CSV, TOML)..."
+              spellcheck="false"
+            ></textarea>
+          </div>
+          <div class="input-controls">
+            <select class="format-select" id="format-select">
+              <option value="auto" data-i18n="input.format.auto">Auto Detect</option>
+              <option value="json">JSON</option>
+              <option value="yaml">YAML</option>
+              <option value="xml">XML</option>
+              <option value="csv">CSV</option>
+              <option value="toml">TOML</option>
+            </select>
+            <button class="action-btn" id="parse-btn" data-i18n="action.parse">Parse</button>
+          </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+          <button class="action-btn secondary" id="action-format" data-i18n="action.format">Format</button>
+          <button class="action-btn secondary" id="action-validate" data-i18n="action.validate">Validate</button>
+          <button class="action-btn secondary" id="action-convert" data-i18n="action.convert">Convert</button>
+          <button class="action-btn secondary" id="action-codegen" data-i18n="action.codegen">Generate Code</button>
+          <button class="action-btn secondary" id="action-export" data-i18n="action.export">Export</button>
+        </div>
+
+        <!-- Sidebar Body (for future extensions) -->
+        <div class="sidebar-body"></div>
+      </aside>
+
+      <!-- ===== Visualization Area ===== -->
+      <main class="viz-area">
+
+        <!-- View Tabs -->
+        <div class="view-tabs">
+          <button class="view-tab active" id="tab-graph" data-i18n="view.graph">Graph View</button>
+          <button class="view-tab" id="tab-tree" data-i18n="view.tree">Tree View</button>
+          <button class="view-tab" id="tab-table" data-i18n="view.table">Table View</button>
+        </div>
+
+        <!-- View Toolbar -->
+        <div class="view-toolbar">
+          <input
+            type="text"
+            class="view-search"
+            id="view-search"
+            data-i18n-placeholder="graph.search"
+            placeholder="Search nodes..."
+          >
+          <button class="view-toolbar-btn" id="reset-view-btn" data-i18n="graph.reset">Reset View</button>
+          <button class="view-toolbar-btn" id="expand-all-btn" data-i18n="tree.expand" style="display:none;">Expand All</button>
+          <button class="view-toolbar-btn" id="collapse-all-btn" data-i18n="tree.collapse" style="display:none;">Collapse All</button>
+        </div>
+
+        <!-- View Content -->
+        <div class="view-content">
+          <!-- Graph Panel -->
+          <div class="view-panel active" id="panel-graph">
+            <div class="graph-container">
+              <canvas id="graph-canvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Tree Panel -->
+          <div class="view-panel" id="panel-tree">
+            <div class="tree-container" id="tree-container"></div>
+          </div>
+
+          <!-- Table Panel -->
+          <div class="view-panel" id="panel-table">
+            <div class="table-container" id="table-container"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- ========== Status Bar ========== -->
+    <footer class="status-bar">
+      <div class="status-item">
+        <span class="status-dot idle" id="status-dot"></span>
+      </div>
+      <div class="status-item">
+        <span data-i18n="status.keys">Keys</span>:
+        <span id="status-keys">-</span>
+      </div>
+      <div class="status-item">
+        <span data-i18n="status.depth">Depth</span>:
+        <span id="status-depth">-</span>
+      </div>
+      <div class="status-item">
+        <span data-i18n="status.size">Size</span>:
+        <span id="status-size">-</span>
+      </div>
+      <div class="status-item">
+        <span data-i18n="status.type">Type</span>:
+        <span id="status-type">-</span>
+      </div>
+      <div class="status-message" id="status-message" data-i18n="status.ready">Ready</div>
+    </footer>
+
+    <!-- ========== Toast Container ========== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ========== Modal ========== -->
+    <div class="modal-overlay" id="modal-overlay" style="display:none;">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title" id="modal-title">Dialog</span>
+          <button class="modal-close" id="modal-close">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-footer" id="modal-footer"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== Scripts (order matters: dependencies first) ========== -->
+  <script src="js/i18n.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/transformer.js"></script>
+  <script src="js/codegen.js"></script>
+  <script src="js/exporter.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- Show app after all scripts load -->
+  <script>
+    document.getElementById('app').classList.add('loaded');
+  </script>
+</body>
+</html>
